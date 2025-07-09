@@ -1,132 +1,214 @@
-<form method="POST" enctype="multipart/form-data" class="news-form">
-  <h2>Crear Nueva Noticia</h2>
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Crear Nueva Noticia</title>
+    <style>
+        body {
+            background-color: #eef2f5;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
 
-  <div class="form-group">
-    <label for="titulo">Título de la Noticia:</label>
-    <input type="text" id="titulo" name="titulo" placeholder="Ej: Nuevo descubrimiento científico" required>
-  </div>
+        .news-form {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
 
-  <div class="form-group">
-    <label for="contenido">Contenido de la Noticia:</label>
-    <textarea id="contenido" name="contenido" placeholder="Escribe aquí el cuerpo de tu noticia..." rows="8" required></textarea>
-  </div>
+        .news-form h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
 
-  <div class="form-group">
-    <label for="imagen">Seleccionar Imagen:</label>
-    <input type="file" id="imagen" name="imagen" accept="image/*">
-    <small>Formatos aceptados: JPG, PNG, GIF. Tamaño máximo: 2MB.</small>
-  </div>
+        .form-group {
+            margin-bottom: 20px;
+        }
 
-  <div class="form-actions">
-    <button type="submit" class="btn-submit">Guardar Noticia</button>
-    <button type="reset" class="btn-reset">Limpiar Campos</button>
-  </div>
-</form>
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #555;
+        }
 
-<style>
-  /* Estilos básicos para mejorar la apariencia */
-  .news-form {
-    max-width: 600px;
-    margin: 30px auto;
-    padding: 25px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
-  }
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group textarea,
+        .form-group select,
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
 
-  .news-form h2 {
-    text-align: center;
-    color: #333;
-    margin-bottom: 25px;
-    font-size: 24px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 15px;
-  }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
 
-  .form-group {
-    margin-bottom: 20px;
-  }
+        .form-group small {
+            color: #666;
+            font-size: 12px;
+        }
 
-  .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: #555;
-  }
+        .form-actions {
+            text-align: right;
+            margin-top: 25px;
+        }
 
-  .form-group input[type="text"],
-  .form-group textarea {
-    width: calc(100% - 20px);
-    /* Ajusta para padding */
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-    box-sizing: border-box;
-    /* Incluye padding y borde en el ancho */
-  }
+        .btn {
+            padding: 12px 25px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-left: 10px;
+        }
 
-  .form-group textarea {
-    resize: vertical;
-    /* Permite redimensionar verticalmente */
-  }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
 
-  .form-group input[type="file"] {
-    padding: 5px 0;
-    /* Espacio para el input de tipo file */
-  }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
 
-  .form-group small {
-    display: block;
-    margin-top: 5px;
-    color: #777;
-    font-size: 13px;
-  }
+        .btn:hover {
+            opacity: 0.9;
+        }
 
-  .form-actions {
-    text-align: right;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-  }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
 
-  .btn-submit,
-  .btn-reset {
-    padding: 12px 25px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-  }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
 
-  .btn-submit {
-    background-color: #007bff;
-    color: white;
-    margin-left: 10px;
-  }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
 
-  .btn-submit:hover {
-    background-color: #0056b3;
-  }
+        .preview {
+            max-width: 300px;
+            margin: 20px auto;
+            text-align: center;
+        }
 
-  .btn-reset {
-    background-color: #6c757d;
-    color: white;
-  }
+        .preview img {
+            max-width: 100%;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
 
-  .btn-reset:hover {
-    background-color: #5a6268;
-  }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
 
-  /* Media Queries para adaptabilidad básica */
-  @media (max-width: 768px) {
-    .news-form {
-      margin: 20px 15px;
-      padding: 20px;
-    }
-  }
-</style>
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="news-form">
+    <a href="/noticias" class="back-link">← Volver a Noticias</a>
+    
+    <h2>Crear Nueva Noticia</h2>
+
+    <?php if (isset($mensaje)): ?>
+        <div class="alert alert-<?php echo $tipo; ?>">
+            <?php echo htmlspecialchars($mensaje); ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (isset($rutaVistaPrevia)): ?>
+        <div class="preview">
+            <p>Vista previa de la imagen:</p>
+            <img src="/<?php echo htmlspecialchars($rutaVistaPrevia); ?>" alt="Vista previa">
+        </div>
+    <?php endif; ?>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="titulo">Título de la Noticia:</label>
+            <input type="text" id="titulo" name="titulo" 
+                   value="<?php echo htmlspecialchars($_POST['titulo'] ?? ''); ?>" 
+                   placeholder="Ej: Nuevo descubrimiento científico" required>
+        </div>
+
+        <div class="form-group">
+            <label for="contenido">Contenido de la Noticia:</label>
+            <textarea id="contenido" name="contenido" 
+                      placeholder="Escribe aquí el cuerpo de tu noticia..." required><?php echo htmlspecialchars($_POST['contenido'] ?? ''); ?></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="imagen">Seleccionar Imagen:</label>
+            <input type="file" id="imagen" name="imagen" accept="image/*">
+            <small>Formatos aceptados: JPG, PNG, GIF. Tamaño máximo: 2MB.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="ancho">Ancho deseado (px):</label>
+            <input type="number" id="ancho" name="ancho" min="1" 
+                   value="<?php echo htmlspecialchars($_POST['ancho'] ?? ''); ?>" 
+                   placeholder="Ej: 600">
+        </div>
+
+        <div class="form-group">
+            <label for="alto">Alto deseado (px):</label>
+            <input type="number" id="alto" name="alto" min="1" 
+                   value="<?php echo htmlspecialchars($_POST['alto'] ?? ''); ?>" 
+                   placeholder="Ej: 400">
+        </div>
+
+        <div class="form-group">
+            <label for="modo">Modo de redimensionado:</label>
+            <select id="modo" name="modo">
+                <option value="auto" <?php echo ($_POST['modo'] ?? '') === 'auto' ? 'selected' : ''; ?>>Auto</option>
+                <option value="exact" <?php echo ($_POST['modo'] ?? '') === 'exact' ? 'selected' : ''; ?>>Exacto</option>
+                <option value="crop" <?php echo ($_POST['modo'] ?? '') === 'crop' ? 'selected' : ''; ?>>Recortar</option>
+                <option value="portrait" <?php echo ($_POST['modo'] ?? '') === 'portrait' ? 'selected' : ''; ?>>Retrato</option>
+                <option value="landscape" <?php echo ($_POST['modo'] ?? '') === 'landscape' ? 'selected' : ''; ?>>Paisaje</option>
+            </select>
+            <small>Elige cómo deseas que se ajuste la imagen.</small>
+        </div>
+
+        <div class="form-actions">
+            <button type="reset" class="btn btn-secondary">Limpiar</button>
+            <button type="submit" class="btn btn-primary">Guardar Noticia</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>
+
+<?php

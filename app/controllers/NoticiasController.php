@@ -1,43 +1,219 @@
 <?php
 
 require_once '../app/core/Controller.php';
+require_once '../app/models/resize.php';
 
 class NoticiasController extends Controller
 {
-  public function index()
-  {
-    $modelo = $this->model('Noticia');
-    $noticias = $modelo->obtenerTodas();
-    $this->view('noticias/index', ['noticias' => $noticias]);
-  }
-
-  public function crear()
-  {
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      $titulo = $_POST['titulo'];
-      $contenido = $_POST['contenido'];
-      $usuario_id = 1; // Simulación
-
-      $imagen = $_FILES['imagen'];
-      $nombre_archivo = time() . '_' . $imagen['name'];
-
-      $uploads_dir = __DIR__ . '/uploads';
-
-      if (!mkdir($uploads_dir, 0755, true)) {
-        // Si la creación falla, muestra un mensaje de error y detén la ejecución
-        die('Error: No se pudo crear el directorio de subidas. Verifica los permisos.');
-      }
-
-      move_uploaded_file($imagen['tmp_name'], $uploads_dir . $nombre_archivo);
-
-      // Miniatura
-      $miniatura = "mini_" . $nombre_archivo;
-      copy($uploads_dir . $nombre_archivo, $uploads_dir . $miniatura);
-
-      $modelo = $this->model('Noticia');
-      $modelo->guardar($titulo, $contenido, $nombre_archivo, $miniatura, $usuario_id);
-      header('Location: /noticias');
+    private $carpetaOriginal = 'uploads/originales/';
+    private $carpetaMini = 'uploads/miniaturas/';
+    
+    public function __construct()
+    {
+        // Crear directorios si no existen
+        if (!is_dir($this->carpetaOriginal)) {
+            mkdir($this->carpetaOriginal, 0755, true);
+        }
+        if (!is_dir($this->carpetaMini)) {
+            mkdir($this->carpetaMini, 0755, true);
+        }
     }
-    $this->view('noticias/crear');
-  }
+
+    public function index()
+    {
+        $modelo = $this->model('Noticia');
+        $noticias = $modelo->obtenerTodas();
+        $this->view('noticias/index', ['noticias' => $noticias]);
+    }
+
+    public function crear()
+    {
+        $datos = [];
+        
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            try {
+                $titulo = $_POST['titulo'] ?? '';
+                $contenido = $_POST['contenido'] ?? '';
+                $ancho = isset($_POST['ancho']) ? (int)$_POST['ancho'] : null;
+                $alto = isset($_POST['alto']) ? (int)$_POST['alto'] : null;
+                $modo = $_POST['modo'] ?? 'auto';
+                $usuario_id = $_SESSION['usuario_id'] ?? 1;
+
+                // Validar datos básicos
+                if (empty($titulo) || empty($contenido)) {
+                    throw new Exception("El título y contenido son obligatorios");
+                }
+
+                $imagen_original = null;
+                $imagen_miniatura = null;
+                $rutaVistaPrevia = null;
+
+                // Procesar imagen si se subió
+                if (!empty($_FILES['imagen']['name'])) {
+                    $resultadoImagen = $this->procesarImagen($_FILES['imagen'], $ancho, $alto, $modo);
+                    $imagen_original = $resultadoImagen['original'];
+                    $imagen_miniatura = $resultadoImagen['miniatura'];
+                    $rutaVistaPrevia = $resultadoImagen['ruta_miniatura'];
+                }
+
+                // Guardar en base de datos
+                $modelo = $this->model('Noticia');
+                $resultado = $modelo->guardar($titulo, $contenido, $imagen_original, $imagen_miniatura, $usuario_id);
+
+                if ($resultado) {
+                    $datos['mensaje'] = 'Noticia creada exitosamente';
+                    $datos['tipo'] = 'success';
+                    $datos['rutaVistaPrevia'] = $rutaVistaPrevia;
+                } else {
+                    throw new Exception("Error al guardar en la base de datos");
+                }
+
+            } catch (Exception $e) {
+                $datos['mensaje'] = $e->getMessage();
+                $datos['tipo'] = 'error';
+            }
+        }
+
+        $this->view('noticias/crear', $datos);
+    }
+
+    public function editar($id)
+    {
+        $modelo = $this->model('Noticia');
+        $noticia = $modelo->obtenerPorId($id);
+        
+        if (!$noticia) {
+            header('Location: /noticias');
+            exit;
+        }
+
+        $datos = ['noticia' => $noticia];
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            try {
+                $titulo = $_POST['titulo'] ?? '';
+                $contenido = $_POST['contenido'] ?? '';
+                $ancho = isset($_POST['ancho']) ? (int)$_POST['ancho'] : null;
+                $alto = isset($_POST['alto']) ? (int)$_POST['alto'] : null;
+                $modo = $_POST['modo'] ?? 'auto';
+
+                if (empty($titulo) || empty($contenido)) {
+                    throw new Exception("El título y contenido son obligatorios");
+                }
+
+                $imagen_original = $noticia['imagen_original'];
+                $imagen_miniatura = $noticia['imagen_miniatura'];
+
+                // Procesar nueva imagen si se subió
+                if (!empty($_FILES['imagen']['name'])) {
+                    // Eliminar imagen anterior
+                    if ($noticia['imagen_original']) {
+                        $this->eliminarImagen($noticia['imagen_original']);
+                    }
+
+                    $resultadoImagen = $this->procesarImagen($_FILES['imagen'], $ancho, $alto, $modo);
+                    $imagen_original = $resultadoImagen['original'];
+                    $imagen_miniatura = $resultadoImagen['miniatura'];
+                    $datos['rutaVistaPrevia'] = $resultadoImagen['ruta_miniatura'];
+                }
+
+                $resultado = $modelo->actualizar($id, $titulo, $contenido, $imagen_original, $imagen_miniatura);
+
+                if ($resultado) {
+                    $datos['mensaje'] = 'Noticia actualizada exitosamente';
+                    $datos['tipo'] = 'success';
+                } else {
+                    throw new Exception("Error al actualizar en la base de datos");
+                }
+
+            } catch (Exception $e) {
+                $datos['mensaje'] = $e->getMessage();
+                $datos['tipo'] = 'error';
+            }
+        }
+
+        $this->view('noticias/editar', $datos);
+    }
+
+    public function eliminar($id)
+    {
+        $modelo = $this->model('Noticia');
+        $noticia = $modelo->obtenerPorId($id);
+        
+        if ($noticia) {
+            // Eliminar archivos de imagen
+            if ($noticia['imagen_original']) {
+                $this->eliminarImagen($noticia['imagen_original']);
+            }
+            
+            // Eliminar de base de datos
+            $modelo->eliminar($id);
+        }
+        
+        header('Location: /noticias');
+        exit;
+    }
+
+    private function procesarImagen($archivo, $ancho = null, $alto = null, $modo = 'auto')
+    {
+        // Validar archivo
+        if (!isset($archivo['tmp_name']) || !$archivo['tmp_name']) {
+            throw new Exception("No se recibió ningún archivo");
+        }
+
+        if ($archivo['size'] > 2 * 1024 * 1024) { // 2MB
+            throw new Exception("La imagen excede los 2MB");
+        }
+
+        // Generar nombres únicos
+        $nombreSeguro = uniqid() . '_' . basename($archivo['name']);
+        $rutaOriginal = $this->carpetaOriginal . $nombreSeguro;
+        $rutaMiniatura = $this->carpetaMini . $nombreSeguro;
+
+        // Mover archivo original
+        if (!move_uploaded_file($archivo['tmp_name'], $rutaOriginal)) {
+            throw new Exception("No se pudo mover la imagen al servidor");
+        }
+
+        // Crear miniatura si se especificaron dimensiones
+        if ($ancho && $alto) {
+            try {
+                $imagen = new resize($rutaOriginal);
+                $imagen->resizeImage($ancho, $alto, $modo);
+                $imagen->saveImage($rutaMiniatura);
+                
+                return [
+                    'original' => $nombreSeguro,
+                    'miniatura' => $nombreSeguro,
+                    'ruta_miniatura' => $rutaMiniatura
+                ];
+            } catch (Exception $e) {
+                // Si falla la miniatura, eliminar original y relanzar excepción
+                unlink($rutaOriginal);
+                throw $e;
+            }
+        }
+
+        // Si no se especificaron dimensiones, usar la original como miniatura
+        copy($rutaOriginal, $rutaMiniatura);
+        
+        return [
+            'original' => $nombreSeguro,
+            'miniatura' => $nombreSeguro,
+            'ruta_miniatura' => $rutaMiniatura
+        ];
+    }
+
+    private function eliminarImagen($nombreArchivo)
+    {
+        $rutaOriginal = $this->carpetaOriginal . $nombreArchivo;
+        $rutaMiniatura = $this->carpetaMini . $nombreArchivo;
+        
+        if (file_exists($rutaOriginal)) {
+            unlink($rutaOriginal);
+        }
+        if (file_exists($rutaMiniatura)) {
+            unlink($rutaMiniatura);
+        }
+    }
 }
