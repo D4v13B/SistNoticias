@@ -20,11 +20,19 @@ class NoticiasController extends Controller
 
       $imagen = $_FILES['imagen'];
       $nombre_archivo = time() . '_' . $imagen['name'];
-      move_uploaded_file($imagen['tmp_name'], "../public/uploads/" . $nombre_archivo);
+
+      $uploads_dir = __DIR__ . '/uploads';
+
+      if (!mkdir($uploads_dir, 0755, true)) {
+        // Si la creación falla, muestra un mensaje de error y detén la ejecución
+        die('Error: No se pudo crear el directorio de subidas. Verifica los permisos.');
+      }
+
+      move_uploaded_file($imagen['tmp_name'], $uploads_dir . $nombre_archivo);
 
       // Miniatura
       $miniatura = "mini_" . $nombre_archivo;
-      copy("../public/uploads/" . $nombre_archivo, "../public/uploads/" . $miniatura);
+      copy($uploads_dir . $nombre_archivo, $uploads_dir . $miniatura);
 
       $modelo = $this->model('Noticia');
       $modelo->guardar($titulo, $contenido, $nombre_archivo, $miniatura, $usuario_id);

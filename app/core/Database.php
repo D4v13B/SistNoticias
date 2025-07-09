@@ -7,7 +7,7 @@ class Database
 
   private function __construct()
   {
-    $this->conn = new PDO('mysql:host=localhost;dbname=sistema_noticias', 'root', '');
+    $this->conn = new PDO('mysql:host=127.0.0.1;dbname=sistema_noticias', 'root', 'monchillo24');
     $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
   }
 
