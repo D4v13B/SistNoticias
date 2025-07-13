@@ -19,4 +19,10 @@ class Noticia
     $stmt = $this->db->query("SELECT * FROM noticias");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
+
+  public function obtenerUno($id)
+  {
+    $stmt = $this->db->query("SELECT * FROM noticias WHERE id = '$id'");
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+  }
 }

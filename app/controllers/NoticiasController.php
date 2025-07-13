@@ -7,7 +7,7 @@ class NoticiasController extends Controller
 {
     private $carpetaOriginal = 'uploads/originales/';
     private $carpetaMini = 'uploads/miniaturas/';
-    
+
     public function __construct()
     {
         // Crear directorios si no existen
@@ -26,10 +26,17 @@ class NoticiasController extends Controller
         $this->view('noticias/index', ['noticias' => $noticias]);
     }
 
+    public function ver($id){
+        $modelo = $this->model('Noticia');
+
+        $noticia = $modelo->obtenerUno($id);
+        $this->view("noticias/ver", ['noticia' => $noticia]);
+    }
+
     public function crear()
     {
         $datos = [];
-        
+
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             try {
                 $titulo = $_POST['titulo'] ?? '';
@@ -37,7 +44,7 @@ class NoticiasController extends Controller
                 $ancho = isset($_POST['ancho']) ? (int)$_POST['ancho'] : null;
                 $alto = isset($_POST['alto']) ? (int)$_POST['alto'] : null;
                 $modo = $_POST['modo'] ?? 'auto';
-                $usuario_id = $_SESSION['usuario_id'] ?? 1;
+                $usuario_id = $_SESSION['usuario']["id"] ?? 1;
 
                 // Validar datos básicos
                 if (empty($titulo) || empty($contenido)) {
@@ -67,8 +74,17 @@ class NoticiasController extends Controller
                 } else {
                     throw new Exception("Error al guardar en la base de datos");
                 }
-
             } catch (Exception $e) {
+                echo '<div style="
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+">
+' . htmlspecialchars($e->getMessage()) . '</div>';
                 $datos['mensaje'] = $e->getMessage();
                 $datos['tipo'] = 'error';
             }
@@ -81,7 +97,7 @@ class NoticiasController extends Controller
     {
         $modelo = $this->model('Noticia');
         $noticia = $modelo->obtenerPorId($id);
-        
+
         if (!$noticia) {
             header('Location: /noticias');
             exit;
@@ -125,7 +141,6 @@ class NoticiasController extends Controller
                 } else {
                     throw new Exception("Error al actualizar en la base de datos");
                 }
-
             } catch (Exception $e) {
                 $datos['mensaje'] = $e->getMessage();
                 $datos['tipo'] = 'error';
@@ -139,17 +154,17 @@ class NoticiasController extends Controller
     {
         $modelo = $this->model('Noticia');
         $noticia = $modelo->obtenerPorId($id);
-        
+
         if ($noticia) {
             // Eliminar archivos de imagen
             if ($noticia['imagen_original']) {
                 $this->eliminarImagen($noticia['imagen_original']);
             }
-            
+
             // Eliminar de base de datos
             $modelo->eliminar($id);
         }
-        
+
         header('Location: /noticias');
         exit;
     }
@@ -181,7 +196,7 @@ class NoticiasController extends Controller
                 $imagen = new resize($rutaOriginal);
                 $imagen->resizeImage($ancho, $alto, $modo);
                 $imagen->saveImage($rutaMiniatura);
-                
+
                 return [
                     'original' => $nombreSeguro,
                     'miniatura' => $nombreSeguro,
@@ -196,7 +211,7 @@ class NoticiasController extends Controller
 
         // Si no se especificaron dimensiones, usar la original como miniatura
         copy($rutaOriginal, $rutaMiniatura);
-        
+
         return [
             'original' => $nombreSeguro,
             'miniatura' => $nombreSeguro,
@@ -208,7 +223,7 @@ class NoticiasController extends Controller
     {
         $rutaOriginal = $this->carpetaOriginal . $nombreArchivo;
         $rutaMiniatura = $this->carpetaMini . $nombreArchivo;
-        
+
         if (file_exists($rutaOriginal)) {
             unlink($rutaOriginal);
         }

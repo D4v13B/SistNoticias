@@ -10,15 +10,29 @@ $uri = str_replace('/SistNoticias', '', $_SERVER['REQUEST_URI']);
 $uri = strtok($uri, '?'); // Elimina parámetros GET
 
 require_once '../app/controllers/NoticiasController.php';
-$controlador = new NoticiasController();
+require_once '../app/controllers/AuthController.php';
+$controladorNoticias = new NoticiasController();
+$controladorAuth = new AuthController(Database::getInstance());
 
 
 if ($uri === '/noticias/crear') {
-  $controlador->crear();
-} else if ($uri === '/noticias' || $uri === '/noticias/') {
-  $controlador->index();
+    $controladorNoticias->crear();
+} elseif ($uri === '/noticias' || $uri === '/noticias/') {
+    $controladorNoticias->index();
+} elseif (preg_match('#^/noticias/ver/(\d+)$#', $uri, $matches)) {
+    $id = (int) $matches[1];
+    $controladorNoticias->ver($id);
+} elseif ($uri === '/login' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $controladorAuth->mostrarLogin();
+} elseif ($uri === '/login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $controladorAuth->login();
+} elseif ($uri === '/registro' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $controladorAuth->mostrarRegistro();
+} elseif ($uri === '/registro' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $controladorAuth->registrar();
+} elseif ($uri === '/logout') {
+    $controladorAuth->logout();
 } else {
-  // Puedes agregar más rutas aquí
-  http_response_code(404);
-  echo "Ruta no encontrada";
+    http_response_code(404);
+    echo "Ruta no encontrada";
 }

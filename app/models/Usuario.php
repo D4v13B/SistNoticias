@@ -3,20 +3,30 @@
 class Usuario
 {
   private $db;
-  public function __construct()
+
+  public function __construct(PDO $conexion)
   {
-    $this->db = Database::getInstance();
+    $this->db = $conexion;
   }
 
-  public function obtenerTodos()
+  // Registrar nuevo usuario
+  public function registrar($nombre, $correo, $contrasena)
   {
-    $stmt = $this->db->query("SELECT * FROM usuarios");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    try {
+      $hash = password_hash($contrasena, PASSWORD_DEFAULT);
+      $stmt = $this->db->prepare("INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)");
+      return $stmt->execute([$nombre, $correo, $hash]);
+    } catch (PDOException $e) {
+      // Aquí podrías manejar el error, por ejemplo si el correo ya existe
+      return false;
+    }
   }
 
-  public function guardar($nombre, $correo, $contrasena)
+  // Obtener usuario activo por correo
+  public function obtenerPorCorreo($correo)
   {
-    $stmt = $this->db->prepare("INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)");
-    return $stmt->execute([$nombre, $correo, password_hash($contrasena, PASSWORD_DEFAULT)]);
+    $stmt = $this->db->prepare("SELECT * FROM usuarios WHERE correo = ? AND activo = 1");
+    $stmt->execute([$correo]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
   }
-} 
+}
