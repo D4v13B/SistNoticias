@@ -82,13 +82,20 @@ class NoticiasController extends Controller
     font-weight: bold;
     background-color: #f8d7da;
     color: #721c24;
-    border: 1px solid #f5c6cb;
-">
+    border: 1px solid #f5c6cb;">
 ' . htmlspecialchars($e->getMessage()) . '</div>';
                 $datos['mensaje'] = $e->getMessage();
                 $datos['tipo'] = 'error';
             }
         }
+
+
+        if (isset($datos["mensaje"])) {
+    $tipo = isset($datos["tipo"]) ? $datos["tipo"] : "info";
+    echo '<div class="alert alert-' . htmlspecialchars($tipo) . '">';
+    echo htmlspecialchars($datos["mensaje"]);
+    echo '</div>';
+}
 
         $this->view('noticias/crear', $datos);
     }

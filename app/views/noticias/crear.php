@@ -141,11 +141,11 @@
     <div class="news-form">
         <a href="http://localhost/SistNoticias/noticias" class="back-link">← Volver a Noticias</a>
 
-        <h2>Crear Nueva Noticia</h2>
+        <h2>Crear Nueva Noticia HOLA</h2>
 
-        <?php if (isset($mensaje)): ?>
+        <?php if (isset($datos["mensaje"])): ?>
             <div class="alert alert-<?php echo $tipo; ?>">
-                <?php echo htmlspecialchars($mensaje); ?>
+                <?php echo htmlspecialchars($datos["mensaje"]); ?>
             </div>
         <?php endif; ?>
 

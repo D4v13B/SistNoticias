@@ -1,6 +1,7 @@
 <?php
 
 require_once '../app/core/Database.php';
+// require_once '../app/core/Auth.php';
 
 // Quita la parte del path base para obtener solo la ruta interna
 // $uri = str_replace('/SistNoticias/public', '', $_SERVER['REQUEST_URI']);
@@ -13,6 +14,8 @@ require_once '../app/controllers/NoticiasController.php';
 require_once '../app/controllers/AuthController.php';
 $controladorNoticias = new NoticiasController();
 $controladorAuth = new AuthController(Database::getInstance());
+
+
 
 
 if ($uri === '/noticias/crear') {
